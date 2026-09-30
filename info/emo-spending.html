@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" type="image/png" href="../favicon/favicon.png">
+    <title>Emotional Spending</title>
+    <link rel="stylesheet" href="../styles/animation.css">
+    <link rel="stylesheet" href="../styles/general.css">
+    <link rel="stylesheet" href="../styles/background.css">
+    <link rel="stylesheet" href="../styles/splitting.css">
+
+    <style>
+      .page-entry{
+        display: none;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <div class="info-content">
+        <div class="info-title">Emotional Spending</div>
+        <div class="cont-box">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+          <button class="cont-why" type="button">
+            What is it?
+          </button>
+        </div>
+        <div class="cont-box harm-box" hidden>
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+          <button class="cont-why cont-harm" type="button">
+            Why is this harmful?
+          </button>
+        </div>
+        <div class="cont-box workaround-box" hidden>
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+          <button class="cont-why" type="button">
+            How can I work around this?
+          </button>
+        </div>
+        <div class="cont-box home-box" hidden>
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+          <button class="cont-why" type="button">
+            I understand, take me back home.
+          </button>
+        </div>
+        <div class="info-copy" aria-live="polite" aria-atomic="true" hidden></div>
+      </div>
+    </div>
+
+  <div class="page-entry" aria-hidden="true"></div>
+  <hr class="line-top">
+   <div class="page-transition" aria-hidden="true"></div>
+  <div class="blob-scene is-opening" aria-hidden="true">
+      <div class="blob blob-one"></div>
+      <div class="blob blob-two"></div>
+      <div class="blob blob-three"></div>
+      <div class="blur-overlay"></div>
+      <div class="noise"></div>
+   </div>
+  
+    <script src="../scripts/splitting.js"></script>
+    <script src="../scripts/blob-targeting.js"></script>
+    <script src="../scripts/custom-cursor.js"></script>
+    <script>
+      const infoTitle = document.querySelector(".info-title");
+      const continueBox = document.querySelector(".cont-box");
+      const continueButton = document.querySelector(".cont-why");
+      const harmBox = document.querySelector(".harm-box");
+      const harmButton = document.querySelector(".cont-harm");
+      const workaroundBox = document.querySelector(".workaround-box");
+      const homeBox = document.querySelector(".home-box");
+      const pageTransition = document.querySelector(".page-transition");
+      const infoCopy = document.querySelector(".info-copy");
+      const titleBounds = infoTitle.getBoundingClientRect();
+      const centerOffset = window.innerHeight / 2 - 40 - (titleBounds.top + titleBounds.height / 2);
+      let infoCopySlide;
+
+      infoTitle.style.opacity = "0";
+
+      function renderInfoLines(lines, keepFinalLine, onComplete) {
+        infoCopy.innerHTML = lines.map(line => `<div class="info-line">${line}</div>`).join("");
+        infoCopy.hidden = false;
+
+        const infoLines = infoCopy.querySelectorAll(".info-line");
+        Splitting({ target: infoLines, by: "chars" });
+
+        let nextLineStart = 0;
+        infoLines.forEach((line, index) => {
+          const characters = line.querySelectorAll(".char");
+          const typewriterDuration = Math.max(0, characters.length - 1) * 36;
+          const lineStart = nextLineStart;
+          const lineFadeStart = lineStart + typewriterDuration + 3000;
+
+          window.setTimeout(() => {
+            line.classList.add("visible");
+            characters.forEach((character, charIndex) => {
+              window.setTimeout(() => character.classList.add("revealed"), charIndex * 36);
+            });
+          }, lineStart);
+
+          const isFinalLine = index === infoLines.length - 1;
+          if (!isFinalLine || !keepFinalLine) {
+            window.setTimeout(() => line.classList.add("fade-out"), lineFadeStart);
+            nextLineStart = lineFadeStart + 800;
+          } else {
+            nextLineStart = lineFadeStart;
+            if (onComplete) window.setTimeout(onComplete, lineFadeStart);
+          }
+        });
+      }
+
+      function renderIntroScene() {
+        renderInfoLines([
+          "Emotional spending is a habit where someone spends money to cope with negative emotions such as stress, anger, sadness, or pain.",
+          "This behaviour happens because purchasing something gives instant gratification.",
+          "This behaviour temporarily suppresses bad feelings and boosts mood."
+        ], true, async () => {
+          await slideCopyAndReveal(harmBox);
+        });
+      }
+
+      async function slideCopyAndReveal(promptBox) {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          infoCopy.style.translate = "0 -125px";
+          promptBox.hidden = false;
+          promptBox.style.opacity = "1";
+          return;
+        }
+
+        infoCopySlide = infoCopy.animate(
+          [{ translate: "0 0" }, { translate: "0 -125px" }],
+          { duration: 750, easing: "ease-in-out", fill: "forwards" }
+        );
+        await infoCopySlide.finished;
+        promptBox.hidden = false;
+        promptBox.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 800, easing: "ease-out", fill: "forwards" }
+        );
+      }
+
+      function renderHarmScene() {
+        renderInfoLines([
+          "Overrelying on spending as a way to regulate your emotions is an unhealthy way to cope with stress and thoughts.",
+          "It does not address the issues causing those negative feelings.",
+          "The positive feeling gained from spending money is also only temporary.",
+          "People often feel regret after using money in this way."
+        ], true, async () => {
+          await slideCopyAndReveal(workaroundBox);
+        });
+      }
+
+      function renderWorkaroundScene() {
+        renderInfoLines([
+          "If you seek gratification from spending, you can try to seek other forms of emotional regulation which may be more fulfilling and budget-friendly long-term.",
+          "This may include starting new hobbies for fun, such as exercise, drawing, reading;",
+          "Or trying out ways to reflect on personal issues, such as meditating, writing, seeking company, and so on."
+        ], true, async () => {
+          await slideCopyAndReveal(homeBox);
+        });
+      }
+
+      continueButton.addEventListener("click", () => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          continueBox.hidden = true;
+          renderIntroScene();
+          return;
+        }
+
+        const exitAnimation = continueBox.animate(
+          [{ opacity: getComputedStyle(continueBox).opacity }, { opacity: 0 }],
+          { duration: 800, easing: "ease-out", fill: "forwards" }
+        );
+        exitAnimation.finished.then(() => {
+          continueBox.hidden = true;
+          renderIntroScene();
+        });
+      });
+
+      harmButton.addEventListener("click", async () => {
+        const fadeOptions = { duration: 800, easing: "ease-out", fill: "forwards" };
+        const fades = [
+          infoCopy.animate([{ opacity: 1 }, { opacity: 0 }], fadeOptions),
+          harmBox.animate([{ opacity: getComputedStyle(harmBox).opacity }, { opacity: 0 }], fadeOptions)
+        ];
+        await Promise.all(fades.map(animation => animation.finished));
+        fades.forEach(animation => animation.cancel());
+        infoCopySlide?.cancel();
+        infoCopy.style.translate = "0 0";
+        infoCopy.hidden = true;
+        harmBox.hidden = true;
+        renderHarmScene();
+      });
+
+      workaroundBox.querySelector("button").addEventListener("click", async () => {
+        const fadeOptions = { duration: 800, easing: "ease-out", fill: "forwards" };
+        const fades = [
+          infoCopy.animate([{ opacity: 1 }, { opacity: 0 }], fadeOptions),
+          workaroundBox.animate(
+            [{ opacity: getComputedStyle(workaroundBox).opacity }, { opacity: 0 }],
+            fadeOptions
+          )
+        ];
+        await Promise.all(fades.map(animation => animation.finished));
+        fades.forEach(animation => animation.cancel());
+        infoCopySlide?.cancel();
+        infoCopy.style.translate = "0 0";
+        infoCopy.hidden = true;
+        workaroundBox.hidden = true;
+        renderWorkaroundScene();
+      });
+
+      homeBox.querySelector("button").addEventListener("click", async () => {
+        const fadeOut = homeBox.animate(
+          [{ opacity: getComputedStyle(homeBox).opacity }, { opacity: 0 }],
+          { duration: 600, easing: "ease-out", fill: "forwards" }
+        );
+        const fadeToBlack = pageTransition.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 1000, easing: "ease-in", fill: "forwards" }
+        );
+        await Promise.all([fadeOut.finished, fadeToBlack.finished]);
+        window.location.href = "../home.html";
+      });
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        infoTitle.style.opacity = "1";
+        continueBox.style.opacity = "1";
+        continueBox.style.transition = "none";
+      } else {
+        infoTitle.style.transform = `translateY(${centerOffset}px)`;
+        const titleFade = infoTitle.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 1000, easing: "ease-out", fill: "forwards" }
+        );
+
+        titleFade.finished.then(() => {
+          window.setTimeout(() => {
+            const titleSlide = infoTitle.animate(
+              [
+                { transform: `translateY(${centerOffset}px)` },
+                { transform: "translateY(0)" },
+              ],
+              { duration: 900, easing: "ease-out", fill: "forwards" }
+            );
+
+            titleSlide.finished.then(() => {
+              window.setTimeout(() => {
+                continueBox.animate(
+                  [{ opacity: 0 }, { opacity: 1 }],
+                  { duration: 800, easing: "ease-out", fill: "forwards" }
+                );
+              }, 500);
+            });
+          }, 1750);
+        });
+      }
+    </script>
+    <hr class="line-bottom">
+  </body>
+</html>

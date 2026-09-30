@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" type="image/png" href="favicon/favicon.png">
+    <title>Welcome</title>
+    <link rel="stylesheet" href="styles/animation.css">
+    <link rel="stylesheet" href="styles/general.css">
+    <link rel="stylesheet" href="styles/background.css">
+    <link rel="stylesheet" href="styles/splitting.css">
+    <style>
+      .page-entry{
+        display: none;
+      }
+
+      .page-transition{
+        position: fixed;
+        inset: 0;
+        background-color: #000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 1200ms ease-in;
+        z-index: 101;
+      }
+
+      .main{
+        z-index: 10;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .intro-scene{
+        position: relative;
+        width: min(90vw, 64rem);
+        height: min(58vh, 30rem);
+        min-height: 260px;
+        transform: translateY(-80px);
+        text-align: center;
+      }
+
+      .intro-line{
+        margin: 0;
+        color: #f5f5f5;
+        opacity: 0;
+        transition: opacity 700ms ease;
+      }
+
+      .intro-line.is-visible{
+        opacity: 1;
+      }
+
+      .welcome-message{
+        position: absolute;
+        top: 50%;
+        left: 0;
+        display: grid;
+        width: 100%;
+        transform: translateY(-50%);
+        transition: top 800ms ease;
+      }
+
+      .welcome-message .info-line{
+        font-size: 52px;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+      }
+
+      .intro-scene.has-followup .welcome-message{
+        transform: translateY(0);
+      }
+
+      .intro-followup{
+        position: absolute;
+        top: 50%;
+        left: 0;
+        display: grid;
+        width: 100%;
+        transform: translateY(-50%);
+      }
+
+      .intro-followup-line{
+        font-size: 36px;
+        line-height: 1.2;
+        text-align: center;
+        overflow-wrap: anywhere;
+      }
+
+      .intro-line .char{
+        opacity: 0;
+        transition: opacity 80ms linear;
+      }
+
+      .intro-line .char.revealed{
+        opacity: 1;
+      }
+
+      .intro-start{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: inline-grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 10px;
+        align-items: start;
+        width: max-content;
+        max-width: 100%;
+        color: #f5f5f5;
+        font-family: myFont;
+        font-size: 36px;
+        line-height: normal;
+        text-decoration: none;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 700ms ease, font-weight 150ms ease-in-out;
+      }
+
+      .intro-start.is-visible{
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .intro-start:hover{
+        font-weight: 800;
+      }
+
+      .intro-start .arrow-bullet{
+        font-size: 36px;
+        line-height: normal;
+      }
+
+      @media (prefers-reduced-motion: reduce){
+        .intro-line,
+        .intro-line .char,
+        .intro-start,
+        .welcome-message{
+          transition: none;
+        }
+
+        .intro-followup{
+          display: block;
+        }
+
+        .intro-followup .info-line{
+          display: block;
+          grid-area: auto;
+          position: static;
+          opacity: 1;
+        }
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="page-entry" aria-hidden="true"></div>
+    <hr class="line-top">
+    <div class="main">
+      <div class="intro-scene">
+        <div class="welcome-message" aria-live="polite"></div>
+        <div class="intro-followup" aria-live="polite"></div>
+        <a class="intro-start" href="info/saving-habit.html">
+          <span class="arrow-bullet" aria-hidden="true">&gt;</span>I want to start my journey.
+        </a>
+      </div>
+    </div>
+    <hr class="line-bottom">
+
+    <div class="page-transition" aria-hidden="true"></div>
+    <div class="blob-scene is-opening" aria-hidden="true">
+      <div class="blob blob-one"></div>
+      <div class="blob blob-two"></div>
+      <div class="blob blob-three"></div>
+      <div class="blur-overlay"></div>
+      <div class="noise"></div>
+    </div>
+
+
+
+    <script src="scripts/splitting.js"></script>
+    <script>
+      const welcomeMessage = document.querySelector('.welcome-message');
+      const followupScene = document.querySelector('.intro-followup');
+      const startLink = document.querySelector('.intro-start');
+      const pageTransition = document.querySelector('.page-transition');
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const introScene = document.querySelector('.intro-scene');
+      const main = document.querySelector('.main');
+      let introLinesPositioned = false;
+      let introButtonPositioned = false;
+
+      function wait(duration){
+        return new Promise(resolve => window.setTimeout(resolve, duration));
+      }
+
+      function alignWelcomeMessageToMain(){
+        const mainTop = main.getBoundingClientRect().top;
+        const sceneTop = introScene.getBoundingClientRect().top;
+        welcomeMessage.style.top = `${mainTop - sceneTop}px`;
+      }
+
+      function positionIntroLines(){
+        const mainBounds = main.getBoundingClientRect();
+        const sceneTop = introScene.getBoundingClientRect().top;
+        const targetCenter = mainBounds.top + mainBounds.height / 2 - 50;
+        followupScene.style.top = `${targetCenter - sceneTop}px`;
+        introLinesPositioned = true;
+      }
+
+      function positionIntroButton(){
+        const mainBounds = main.getBoundingClientRect();
+        const sceneTop = introScene.getBoundingClientRect().top;
+        const targetCenter = mainBounds.top + mainBounds.height / 2 - 50;
+        startLink.style.top = `${targetCenter - sceneTop}px`;
+        introButtonPositioned = true;
+      }
+
+      window.addEventListener('resize', () => {
+        if (introScene.classList.contains('has-followup')) alignWelcomeMessageToMain();
+        if (introLinesPositioned) positionIntroLines();
+        if (introButtonPositioned) positionIntroButton();
+      }, { passive: true });
+
+      function renderInfoLines(lines, keepFinalLine, onComplete, container, lingerDuration = 3000){
+        container.replaceChildren();
+        const infoLines = lines.map(text => {
+          const line = document.createElement('p');
+          line.className = `intro-line info-line ${container === welcomeMessage ? 'welcome-title-line' : 'intro-followup-line'}`;
+          line.textContent = text;
+          container.append(line);
+          return line;
+        });
+        Splitting({ target: infoLines, by: 'chars' });
+
+        if (reducedMotion) {
+          if (container === followupScene && infoLines.length > 1) container.classList.add('is-stacked');
+          infoLines.forEach(line => {
+            line.classList.add('visible');
+            line.querySelectorAll('.char').forEach(character => character.classList.add('revealed'));
+          });
+          if (keepFinalLine && onComplete) window.setTimeout(onComplete, lingerDuration);
+          return;
+        }
+
+        let nextLineStart = 0;
+        infoLines.forEach((line, index) => {
+          const characters = [...line.querySelectorAll('.char')];
+          const typewriterDuration = Math.max(0, characters.length - 1) * 36;
+          const lineStart = nextLineStart;
+          const lineFadeStart = lineStart + typewriterDuration + 80 + lingerDuration;
+
+          window.setTimeout(() => {
+            line.classList.add('visible');
+            characters.forEach((character, characterIndex) => {
+              window.setTimeout(() => character.classList.add('revealed'), characterIndex * 36);
+            });
+          }, lineStart);
+
+          const isFinalLine = index === infoLines.length - 1;
+          if (!isFinalLine || !keepFinalLine) {
+            window.setTimeout(() => line.classList.add('fade-out'), lineFadeStart);
+            nextLineStart = lineFadeStart + 800;
+          } else {
+            nextLineStart = lineFadeStart;
+            if (onComplete) window.setTimeout(onComplete, lineFadeStart);
+          }
+        });
+      }
+
+      async function slideCopyAndReveal(content, promptBox){
+        promptBox.classList.remove('is-visible');
+        promptBox.style.opacity = '0';
+        promptBox.style.pointerEvents = 'none';
+
+        const finalLine = content.lastElementChild;
+        const titleBottom = welcomeMessage.getBoundingClientRect().bottom;
+        const lineTop = finalLine.getBoundingClientRect().top;
+        const currentTransform = getComputedStyle(content).transform;
+        const currentTranslateY = currentTransform === 'none' ? 0 : new DOMMatrix(currentTransform).m42;
+        const destinationTranslateY = currentTranslateY + titleBottom + 20 - lineTop;
+
+        if (reducedMotion) {
+          content.style.transform = `translateY(${destinationTranslateY}px)`;
+          positionIntroButton();
+          promptBox.classList.add('is-visible');
+          promptBox.style.opacity = '';
+          promptBox.style.pointerEvents = '';
+          return;
+        }
+
+        await content.animate(
+          [
+            { transform: currentTransform },
+            { transform: `translateY(${destinationTranslateY}px)` },
+          ],
+          { duration: 750, easing: 'ease-in-out', fill: 'forwards' }
+        ).finished;
+
+        positionIntroButton();
+        promptBox.style.opacity = '';
+        promptBox.style.pointerEvents = '';
+        await promptBox.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 800, easing: 'ease-out', fill: 'forwards' }
+        ).finished;
+        promptBox.classList.add('is-visible');
+      }
+
+      async function runIntro(){
+        await wait(1000);
+        renderInfoLines(["Welcome to Zen Log!"], true, async () => {
+          alignWelcomeMessageToMain();
+          introScene.classList.add('has-followup');
+          if (!reducedMotion) await wait(800);
+          positionIntroLines();
+          renderInfoLines(
+            [
+              "In an increasingly digital world, saving money becomes increasingly difficult.",
+              "The digital landscape presents many obstacles to saving money.",
+              "It constantly barrages us with advertisements, notifications, and other forms of content designed to hook your attention onto products being marketed to you.",
+              "The purpose of Zen Log is to help you navigate past these obstacles and toward better financial habits.",
+              "Our goal is to make you mindful of the current digital environment and how it influences your spending.",
+              "Zen Log allows you to reflect on your spending habits, and track your goals and progress over time.",
+              "Let's begin by learning about habits."
+            ],
+            true,
+            () => slideCopyAndReveal(followupScene, startLink),
+            followupScene
+          );
+        }, welcomeMessage, 2500);
+      }
+
+      startLink.addEventListener('click', async event => {
+        event.preventDefault();
+        startLink.style.pointerEvents = 'none';
+        try {
+          localStorage.setItem('zen-log.has-visited', 'true');
+        } catch {}
+        const destination = startLink.href;
+        if (!reducedMotion) {
+          pageTransition.classList.add('is-active');
+          await wait(1200);
+        }
+        window.location.href = destination;
+      });
+
+      runIntro();
+    </script>
+    <script src="scripts/custom-cursor.js"></script>
+  </body>
+
+
+
+
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" type="image/png" href="favicon/favicon.png">
+    <title>Goal Manager</title>
+    <link rel="stylesheet" href="styles/animation.css">
+    <link rel="stylesheet" href="styles/general.css">
+    <link rel="stylesheet" href="styles/background.css">
+    <link rel="stylesheet" href="styles/splitting.css">
+
+    <style>
+      body{
+        margin:5%;
+      }
+      .blob-scene{
+        pointer-events: none;
+      }
+      .goal-statement{
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        position: relative;
+        z-index: 10;
+      }
+
+      .goal-first-line{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .goal-save-line{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .statement{
+        margin-right: 0;
+        font-size: 36px;
+      }
+
+      .goal-amount{
+        width: 150px;
+        height: 45px;
+        field-sizing: fixed;
+      }
+
+      .timeframe-picker{
+        position: relative;
+        align-self: center;
+      }
+
+      .timeframe-trigger{
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: auto;
+        padding: 4px 10px;
+        border: 1px solid rgb(245 245 245 / 65%);
+        border-radius: 8px;
+        background: transparent;
+        font-size: 36px;
+        line-height: 1.2;
+        white-space: nowrap;
+        letter-spacing: normal;
+        transition: letter-spacing 0.3s ease-in-out;
+      }
+
+      .timeframe-trigger.is-placeholder{
+        letter-spacing: 4px;
+      }
+
+      .timeframe-trigger:focus-visible,
+      .timeframe-option:focus-visible{
+        outline: 2px solid #f5f5f5;
+        outline-offset: 3px;
+      }
+
+      .timeframe-trigger::after{
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: translateY(-2px) rotate(45deg);
+      }
+
+      .timeframe-options{
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        z-index: 20;
+        display: grid;
+        gap: 6px;
+        width: max-content;
+        min-width: 100%;
+        padding: 6px;
+        border: 1px solid rgb(245 245 245 / 35%);
+        border-radius: 8px;
+        background: rgb(21, 21, 21);
+      }
+
+      .timeframe-options[hidden]{
+        display: none;
+      }
+
+      .timeframe-option{
+        width: 100%;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 20px;
+        white-space: nowrap;
+        transition: background-color 120ms ease;
+      }
+
+      .timeframe-option:hover,
+      .timeframe-option[aria-selected="true"]{
+        background: rgb(245 245 245 / 16%);
+      }
+
+      @media (max-width: 600px){
+        .goal-first-line{
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .goal-save-line{
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+      }
+
+      .confirm-goal{
+        font-size: 36px;
+        margin: 60px 0 0;
+        transition: font-weight 150ms ease-in-out;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 10px;
+        align-items: start;
+        min-width: 0;
+      }
+
+      .confirm-goal:hover{
+        font-weight: 800;
+      }
+
+      .goal-error-overlay{
+        position: fixed;
+        inset: 0;
+        z-index: 250;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .goal-error-overlay.is-visible{
+        visibility: visible;
+      }
+
+      .goal-error-message{
+        position: relative;
+        isolation: isolate;
+        transform: translateY(-5vh);
+        max-width: min(34rem, 90vw);
+        color: #f5f5f5;
+        font-family: myFont;
+        font-size: 30px;
+        font-weight: 400;
+        line-height: 1.25;
+        text-align: center;
+      }
+
+      .goal-error-message::before{
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: -18vh -20vw;
+        border-radius: 50%;
+        background: rgb(21 21 21);
+        filter: blur(55px);
+      }
+
+      .goal-result[hidden]{
+        display: none;
+      }
+
+      .goal-result{
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        transform: translateY(-5vh);
+        color: #f5f5f5;
+        font-family: myFont;
+        font-size: 40px;
+        font-weight: 400;
+        line-height: 1.25;
+        text-align: center;
+        opacity: 0;
+      }
+
+      .goal-result-content{
+        position: relative;
+        display: block;
+        width: min(90vw, 48rem);
+        height: 0;
+      }
+
+      .goal-result-content > p:first-child{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        white-space: nowrap;
+        transform: translateY(-50%);
+      }
+
+      .goal-daily-saving{
+        position: absolute;
+        top: 27px;
+        left: 0;
+        width: 100%;
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.25;
+        white-space: normal !important;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(18px);
+        transition: opacity 500ms ease, transform 500ms ease, visibility 0s linear 500ms;
+      }
+
+      .goal-daily-saving.is-visible{
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        transition-delay: 0s;
+      }
+
+      .goal-result-actions{
+        position: absolute;
+        top: 150px;
+        left: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translate(-50%, 18px);
+        transition: opacity 500ms ease, transform 500ms ease, visibility 0s linear 500ms;
+      }
+
+      .goal-result-actions.is-visible{
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translate(-50%, 0);
+        transition-delay: 0s;
+      }
+
+      .goal-result-action{
+        position: relative;
+        display: block;
+        width: max-content;
+        margin: 0;
+        white-space: nowrap;
+        text-align: center;
+      }
+
+      .goal-result-action .arrow-bullet{
+        position: absolute;
+        top: 50%;
+        right: calc(100% + 10px);
+        transform: translateY(-50%);
+      }
+
+      .goal-result .char{
+        opacity: 0;
+      }
+
+      .goal-result .char.revealed{
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-entry" aria-hidden="true"></div>
+    <hr class="line-top">
+    <div class="main">
+      <div class="goal-statement">
+        <div class="goal-first-line">
+          <p class="statement">Within a timeframe of a</p>
+          <div class="timeframe-picker">
+            <button class="timeframe-trigger is-placeholder" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="timeframe-options">
+              ........
+            </button>
+            <div class="timeframe-options" id="timeframe-options" role="listbox" aria-label="Goal timeframe" hidden>
+              <button class="timeframe-option" type="button" role="option" aria-selected="false">week</button>
+              <button class="timeframe-option" type="button" role="option" aria-selected="false">month</button>
+              <button class="timeframe-option" type="button" role="option" aria-selected="false">year</button>
+            </div>
+          </div>
+          <p class="statement">,</p>
+        </div>
+        <div class="goal-save-line">
+          <p class="statement">I will save $</p>
+          <span class="input-underline">
+            <input class="input-field goal-amount" type="text" inputmode="decimal" aria-label="Goal amount">
+          </span>
+          <p class="statement">.</p>
+        </div>
+        <button class="confirm-goal" type="button">
+            <div class="arrow-bullet" aria-hidden="true">&gt;</div> This is my goal.
+        </button>
+      </div>
+    </div>
+    <hr class="line-bottom">
+    <div class="goal-error-overlay">
+      <div class="goal-error-message" role="alert" aria-live="assertive">
+        Please choose a timeframe and enter a savings amount before confirming.
+      </div>
+    </div>
+    <div class="goal-result" aria-live="polite" hidden>
+      <div class="goal-result-content">
+        <p></p>
+        <p class="goal-daily-saving"></p>
+        <div class="goal-result-actions">
+          <button class="confirm-goal goal-result-action edit-goal" type="button">
+            <span class="arrow-bullet" aria-hidden="true">&gt;</span>Edit goal
+          </button>
+          <button class="confirm-goal goal-result-action finalize-goal" type="button">
+            <span class="arrow-bullet" aria-hidden="true">&gt;</span>Confirm goal
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="blob-scene" aria-hidden="true">
+      <div class="blob blob-one"></div>
+      <div class="blob blob-two"></div>
+      <div class="blob blob-three"></div>
+      <div class="blur-overlay"></div>
+      <div class="noise"></div>
+    </div>
+
+    <script>
+      const timeframeTrigger = document.querySelector(".timeframe-trigger");
+      const timeframeOptions = document.querySelector(".timeframe-options");
+      const timeframeButtons = [...timeframeOptions.querySelectorAll(".timeframe-option")];
+      const goalAmount = document.querySelector(".goal-amount");
+      const confirmGoal = document.querySelector(".confirm-goal");
+      const goalErrorOverlay = document.querySelector(".goal-error-overlay");
+      const goalResult = document.querySelector(".goal-result");
+      const goalResultContent = document.querySelector(".goal-result-content");
+      const goalDailySaving = document.querySelector(".goal-daily-saving");
+      const goalResultActions = document.querySelector(".goal-result-actions");
+      const editGoalButton = document.querySelector(".edit-goal");
+      const finalizeGoalButton = document.querySelector(".finalize-goal");
+      const goalStatement = document.querySelector(".goal-statement");
+      const blobScene = document.querySelector(".blob-scene");
+      const goalStorageKey = "goal-manager.goal";
+      let goalErrorTimeout;
+      let goalErrorAnimation;
+
+      try {
+        const savedGoal = JSON.parse(localStorage.getItem(goalStorageKey));
+        const savedTimeframe = timeframeButtons.find(option => option.textContent.trim() === savedGoal?.timeframe);
+        const savedAmount = savedGoal?.amount;
+
+        if (savedTimeframe && typeof savedAmount === "string" && savedAmount.trim() !== "" && Number.isFinite(Number(savedAmount))) {
+          savedTimeframe.setAttribute("aria-selected", "true");
+          timeframeTrigger.firstChild.textContent = savedTimeframe.textContent;
+          timeframeTrigger.classList.remove("is-placeholder");
+          goalAmount.value = savedAmount;
+        }
+      } catch {}
+
+      goalAmount.addEventListener("input", () => {
+        const numericText = goalAmount.value.replace(/[^\d.]/g, "");
+        const decimalIndex = numericText.indexOf(".");
+        goalAmount.value = decimalIndex === -1
+          ? numericText
+          : numericText.slice(0, decimalIndex + 1) + numericText.slice(decimalIndex + 1).replace(/\./g, "");
+      });
+
+      confirmGoal.addEventListener("click", async () => {
+        const selectedTimeframe = timeframeButtons.find(option => option.getAttribute("aria-selected") === "true");
+        const amount = goalAmount.value.trim();
+        const hasAmount = amount !== "" && Number.isFinite(Number(amount));
+
+        if (selectedTimeframe && hasAmount) {
+          try {
+            localStorage.setItem(goalStorageKey, JSON.stringify({
+              timeframe: selectedTimeframe.textContent.trim(),
+              amount,
+            }));
+          } catch {}
+
+          confirmGoal.disabled = true;
+          const goalResultText = goalResult.querySelector("p");
+          goalResultText.textContent = `My goal is to save $${amount} within a ${selectedTimeframe.textContent.trim()}.`;
+          goalResult.hidden = false;
+          await document.fonts.ready;
+          goalResultText.style.fontSize = "40px";
+          Splitting({ target: [goalResultText], by: "chars", force: true });
+
+          const resultTextWidth = goalResultText.clientWidth;
+          let minFontSize = 18;
+          let maxFontSize = 40;
+          while (maxFontSize - minFontSize > 0.5) {
+            const fontSize = (minFontSize + maxFontSize) / 2;
+            goalResultText.style.fontSize = `${fontSize}px`;
+            if (goalResultText.scrollWidth <= resultTextWidth) {
+              minFontSize = fontSize;
+            } else {
+              maxFontSize = fontSize;
+            }
+          }
+          goalResultText.style.fontSize = `${minFontSize}px`;
+
+          blobScene.classList.add("is-opening");
+
+          const fadeOutText = goalStatement.animate(
+            [{ opacity: 1 }, { opacity: 0 }],
+            { duration: 900, easing: "ease-out", fill: "forwards" }
+          );
+          await fadeOutText.finished;
+          await new Promise(resolve => window.setTimeout(resolve, 1150));
+          goalResult.animate(
+            [{ opacity: 0 }, { opacity: 1 }],
+            { duration: 450, easing: "ease-out", fill: "forwards" }
+          );
+          goalResultText.querySelectorAll(".char").forEach((character, index) => {
+            window.setTimeout(() => character.classList.add("revealed"), index * 32);
+          });
+
+          const typewriterDuration = Math.max(0, goalResultText.querySelectorAll(".char").length - 1) * 32;
+          window.setTimeout(async () => {
+            await goalResultContent.animate(
+              [{ translate: "0 0" }, { translate: "0 -125px" }],
+              { duration: 750, easing: "ease-in-out", fill: "forwards" }
+            ).finished;
+            const daysByTimeframe = { week: 7, month: 30, year: 365 };
+            const timeframe = selectedTimeframe.textContent.trim();
+            const dailyAmount = (Number(amount) / daysByTimeframe[timeframe]).toFixed(2);
+            goalDailySaving.textContent = `To reach my goal, I should save $${dailyAmount} per day.`;
+            goalDailySaving.classList.add("is-visible");
+            Splitting({ target: [goalDailySaving], by: "chars", force: true });
+            const dailyCharacters = goalDailySaving.querySelectorAll(".char");
+            dailyCharacters.forEach((character, index) => {
+              window.setTimeout(() => character.classList.add("revealed"), index * 32);
+            });
+            const dailyTypewriterDuration = Math.max(0, dailyCharacters.length - 1) * 32;
+            window.setTimeout(() => {
+              goalResultActions.classList.add("is-visible");
+            }, dailyTypewriterDuration + 1500);
+          }, typewriterDuration + 2000);
+          return;
+        }
+
+        window.clearTimeout(goalErrorTimeout);
+        goalErrorAnimation?.cancel();
+        goalErrorOverlay.classList.add("is-visible");
+        goalErrorAnimation = goalErrorOverlay.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 450, easing: "ease-out", fill: "forwards" }
+        );
+        await goalErrorAnimation.finished;
+
+        goalErrorTimeout = window.setTimeout(() => {
+          goalErrorAnimation = goalErrorOverlay.animate(
+            [{ opacity: 1 }, { opacity: 0 }],
+            { duration: 450, easing: "ease-in", fill: "forwards" }
+          );
+          goalErrorAnimation.finished.then(() => {
+            goalErrorOverlay.classList.remove("is-visible");
+          });
+        }, 2500);
+      });
+
+      function setTimeframeMenuOpen(isOpen){
+        timeframeOptions.hidden = !isOpen;
+        timeframeTrigger.setAttribute("aria-expanded", String(isOpen));
+      }
+
+      timeframeTrigger.addEventListener("click", () => {
+        setTimeframeMenuOpen(timeframeOptions.hidden);
+      });
+
+      timeframeOptions.addEventListener("click", event => {
+        const selectedOption = event.target.closest(".timeframe-option");
+        if (!selectedOption) return;
+
+        timeframeButtons.forEach(option => {
+          option.setAttribute("aria-selected", String(option === selectedOption));
+        });
+        timeframeTrigger.firstChild.textContent = selectedOption.textContent;
+        timeframeTrigger.classList.remove("is-placeholder");
+        setTimeframeMenuOpen(false);
+        timeframeTrigger.focus();
+      });
+
+      timeframeTrigger.addEventListener("keydown", event => {
+        if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " "){
+          event.preventDefault();
+          setTimeframeMenuOpen(true);
+          timeframeButtons[0].focus();
+        }
+      });
+
+      timeframeOptions.addEventListener("keydown", event => {
+        const currentIndex = timeframeButtons.indexOf(document.activeElement);
+        if (event.key === "Escape"){
+          event.preventDefault();
+          setTimeframeMenuOpen(false);
+          timeframeTrigger.focus();
+        } else if (event.key === "ArrowDown" || event.key === "ArrowUp"){
+          event.preventDefault();
+          const direction = event.key === "ArrowDown" ? 1 : -1;
+          const nextIndex = (currentIndex + direction + timeframeButtons.length) % timeframeButtons.length;
+          timeframeButtons[nextIndex].focus();
+        }
+      });
+
+      document.addEventListener("click", event => {
+        if (!event.target.closest(".timeframe-picker")) setTimeframeMenuOpen(false);
+      });
+
+      editGoalButton.addEventListener("click", async () => {
+        await goalResult.animate(
+          [{ opacity: 1 }, { opacity: 0 }],
+          { duration: 600, easing: "ease-in", fill: "forwards" }
+        ).finished;
+        goalResult.getAnimations().forEach(animation => animation.cancel());
+        goalResult.hidden = true;
+        goalResult.style.opacity = "0";
+        goalResultActions.getAnimations().forEach(animation => animation.cancel());
+        goalResultActions.classList.remove("is-visible");
+        goalDailySaving.classList.remove("is-visible");
+        goalResultContent.getAnimations().forEach(animation => animation.cancel());
+        goalResultContent.style.translate = "0 0";
+        goalResult.querySelector("p").textContent = "";
+        goalDailySaving.textContent = "";
+        goalStatement.getAnimations().forEach(animation => animation.cancel());
+        goalStatement.style.opacity = "0";
+        goalStatement.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 600, easing: "ease-out", fill: "forwards" }
+        );
+        confirmGoal.disabled = false;
+        blobScene.classList.remove("is-opening");
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      finalizeGoalButton.addEventListener("click", async () => {
+        finalizeGoalButton.disabled = true;
+        goalResultActions.classList.remove("is-visible");
+        goalDailySaving.hidden = true;
+        const confirmationText = goalResult.querySelector("p");
+        confirmationText.textContent = "Your goal is confirmed.";
+        confirmationText.style.fontSize = "40px";
+        Splitting({ target: [confirmationText], by: "chars", force: true });
+        const characters = confirmationText.querySelectorAll(".char");
+        characters.forEach((character, index) => {
+          window.setTimeout(() => character.classList.add("revealed"), index * 36);
+        });
+
+        const confirmationDuration = Math.max(0, characters.length - 1) * 36;
+        await new Promise(resolve => window.setTimeout(resolve, confirmationDuration + 2000));
+        await goalResult.animate(
+          [{ opacity: 1 }, { opacity: 0 }],
+          { duration: 700, easing: "ease-in", fill: "forwards" }
+        ).finished;
+        window.location.href = "home.html";
+      });
+
+    </script>
+    <script src="scripts/splitting.js"></script>
+    <script src="scripts/blob-targeting.js"></script>
+    <script src="scripts/custom-cursor.js"></script>
+  </body>
+</html>

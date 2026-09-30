@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" type="image/png" href="favicon/favicon.png">
+    <title>Quiz</title>
+    <link rel="stylesheet" href="styles/animation.css">
+    <link rel="stylesheet" href="styles/general.css">
+    <link rel="stylesheet" href="styles/background.css">
+    <link rel="stylesheet" href="styles/splitting.css">
+    <style>
+      .quiz{
+        font-family: myfont;
+        color: #f5f5f5;
+        position: absolute;
+        top: 15%;
+        left: 15%;
+        right: 15%;
+        font-weight: 400;
+        z-index: 100;
+      }
+
+      .quiz.question-state{
+        position: static;
+      }
+
+      .quiz.result-state{
+        z-index: 201;
+      }
+
+      .quiz.question-state .main{
+        z-index: 100;
+      }
+
+      .quiz-menu{
+        display: flex;
+        flex-direction: column;
+      }
+
+      .quiz-choice{
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 10px;
+        align-items: start;
+        min-width: 0;
+      }
+
+      .arrow-bullet{
+        font-size: 36px;
+        line-height: normal;
+      }
+
+      .quiz-question{
+        font-size: 52px;
+        margin-bottom: 15px;
+        font-style: italic;
+      }
+
+      .result-scene{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .result-copy{
+        display: grid;
+        width: 100%;
+      }
+
+      .result-text{
+        grid-area: 1 / 1;
+        font-size: 52px;
+        margin-bottom: 25px;
+        opacity: 0;
+        transition: none;
+      }
+
+      .result-text.visible,
+      .result-link.visible{
+        opacity: 1;
+      }
+
+      .result-text.fade-out{
+        opacity: 0;
+        transition: opacity 2400ms ease;
+      }
+
+      .result-link{
+        opacity: 0;
+        transition: opacity 1000ms ease;
+        align-items: center;
+      }
+
+      .result-link .quiz-option{
+        margin-top: 0;
+        margin-bottom: 0;
+      }
+
+      .quiz-option{
+        font-size: 36px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        align-self: start;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 10px;
+        align-items: start;
+        min-width: 0;
+        transition: font-weight 150ms ease-in-out;
+      }
+
+      .quiz-option:hover{
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="page-entry" aria-hidden="true"></div>
+    <hr class="line-top">
+    <div id="quiz" class="quiz query-1">
+    </div>
+    <hr class="line-bottom">
+
+
+    <div class="blob-scene" aria-hidden="true">
+      <div class="blob blob-one"></div>
+      <div class="blob blob-two"></div>
+      <div class="blob blob-three"></div>
+      <div class="blur-overlay"></div>
+      <div class="noise"></div>
+    </div>
+
+    <script>
+      /*questionnaire about user's spending habits; end results link to informational pages */
+      const questions = {
+        start: {
+          question: "What are you struggling with?",
+          options: [
+            { text: "I keep spending on things I don't need.", next: "spending" },
+            { text: "I don't keep up with tracking myself.", next: "tracking_why" },
+          ]
+        },
+
+        tracking_why: {
+          question: "What makes it difficult to track your savings?",
+          options: [
+            { text: "I forget to log my progress.", next: "info_saving-habit" },
+            { text: "I find it difficult to build the habit.", next: "info_saving-habit" },
+            { text: "I don't understand the point of it.", next: "info_saving-habit" },
+          ]
+        },
+
+        spending: {
+          question: "What were you spending money on?",
+          options: [
+            { text: "Things I wanted to have.", next: "want_where" },
+            { text: "Things I needed.", next: "need" },
+          ]
+        },
+
+        need:{
+          question: "How did you pay for these purchases?",
+          options: [
+            { text: "I used a digital wallet.", next: "spending_amounts" },
+            { text: "I used physical cash.", next: "pending_amounts" },
+            { text: "I used a 'Buy Now, Pay Later' service.", next: "info_bnpl" },
+          ]
+        },
+
+        spending_amounts:{
+          question: "Are you spending more than you'd like?",
+          options: [
+            { text: "Yes.", next: "info_overspending" },
+            { text: "No.", next: "review" },
+          ]
+        },
+
+        want_where: {
+          question: "Where did you see these things?",
+          options: [
+            { text: "I saw them in ads.", next: "buy_why" },
+            { text: "I saw someone else have them.", next: "buy_why" },
+            { text: "I saw them in-person.", next: "buy_why" },
+          ]
+        },
+
+        buy_why: {
+          question: "Why did you buy them?",
+          options: [
+            { text: "I like the feeling of having something new.", next: "info_gratification" },
+            { text: "Because other people were buying them.", next: "info_social-influence" },
+            { text: "Because I was interested in them.", next: "info_algo-marketing" },
+            { text: "Because I wanted stress relief.", next: "info_emo-spending" },
+            { text: "Because it was on sale.", next: "info_sales-tactics" }
+          ]
+        },
+      };
+
+      const resultScenes = {
+        "info_gratification": {
+          first: "It can be difficult to resist the temptation of buying something new.",
+          second: "However, seeking satisfaction in this way may be harmful long-term.",
+          destination: "info/gratification.html"
+        },
+        "info_social-influence": {
+          first: "Social influence is the effect trends and other people have on our behaviour.",
+          second: "Some feel pressured to buy things to fit in.",
+          third: "This can drive us to spend more than we should on things we don't need.",
+          destination: "info/social-influence.html"
+        },
+        "info_algo-marketing": {
+          first: "In online spaces, algorithms are advanced systems used to compile and sort data.",
+          second: "Algorithms are found in every corner of the internet, especially on search engines and social media platforms.",
+          third: "Here, they use your data to determine what pieces of content are shown to you.",
+          fourth:"This includes things like the suggested searches on Google, recommended videos on YouTube, or the things marketed to you on social media.",
+          destination: "info/algo-marketing.html"
+        },
+        "info_emo-spending": {
+          first: "Some people rely on spending money to relieve negative emotions.",
+          second: "Purchasing something gives instant gratification, which suppresses bad feelings and boosts mood.",
+          third: "However, this coping method is unhealthy, and can be financially and mentally detrimental long-term.",
+          destination: "info/emo-spending.html"
+        },
+        "info_sales-tactics": {
+          first: "Many online marketplaces use sales tactics which make purchases feel more urgent because of limits in time and/or quantity.",
+          second: "These tactics take advantage of fear of missing out, making purchases feel more urgent.",
+          destination: "info/sales-tactics.html"
+        },
+        "info_saving-habit": {
+          first: "Building a habit of saving money can be difficult.",
+          second: "However, it is an important skill to develop for your financial wellbeing.",
+          destination: "info/saving-habit.html"
+        },
+        "info_overspending": {
+          first: "Overspending is a behaviour in which someone ends up spending more than they realise, and in turn, saving less than they want to.",
+          second: "This behaviour may develop if someone isn't consciously taking into account the different purchases they make daily.",
+          destination: "info/overspending.html"
+        },
+        "info_bnpl": {
+          first: "'Buy Now, Pay Later' (BNPL) services are payment options which allow users to finance purchases into multiple instalments instead of the full upfront price.",
+          second: "While BNPL services make things appear cheaper, you can fall into a trap of spending more than you can afford.",
+          destination: "info/bnpl.html"
+        },
+        "review": {
+          first: "It seems you're on track to building healthy habits around money!",
+          second: "If you'd like to read some modules on habits, you can continue below:",
+          destination: "info/review.html"
+        }
+      };
+
+/*render questionnaire*/
+      const quiz = document.querySelector("#quiz");
+
+      function renderQuestion(questionId) {
+        quiz.classList.remove("result-state");
+        if (resultScenes[questionId]) {
+          renderResultScene(resultScenes[questionId]);
+          return;
+        }
+
+        const currentQuestion = questions[questionId];
+        quiz.classList.add("question-state");
+
+        quiz.innerHTML = `
+          <div class="main">
+            <div class="quiz-menu">
+              <div class="quiz-question">${currentQuestion.question}</div>
+              ${currentQuestion.options.map(option => `
+                <button class="quiz-option" data-next="${option.next}">
+                  <span class="arrow-bullet" aria-hidden="true">&gt;</span>
+                  <span>${option.text}</span>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+
+        quiz.querySelector('.quiz-menu').animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 700, easing: 'ease-out' }
+        );
+
+        document.querySelectorAll(".quiz-option").forEach(button => {
+          button.addEventListener("click", () => {
+            const next = button.dataset.next;
+
+            if (next.includes("/")) {
+              window.location.href = next;
+              return;
+            }
+
+            showQuestion(next);
+          });
+        });
+      }
+
+      /*renders results screen which then links to info page*/
+      function renderResultScene(scene) {
+        quiz.classList.remove("question-state");
+        quiz.classList.add("result-state");
+        const resultLines = [scene.first, scene.second, scene.third, scene.fourth]
+          .filter(Boolean);
+
+        quiz.innerHTML = `
+          <div class="result-scene">
+            <div class="result-copy">
+              ${resultLines.map((line, index) => `
+                <div id="result-line-${index}" class="result-text">${line}</div>
+              `).join("")}
+            </div>
+            <div class="quiz-choice result-link">
+              <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+              <button class="quiz-option" data-next="${scene.destination}">
+                I want to read more.
+              </button>
+            </div>
+          </div>
+        `;
+
+        const resultTextElements = quiz.querySelectorAll(".result-text");
+        Splitting({ target: resultTextElements, by: "chars" });
+        const readMore = document.querySelector(".result-link");
+        const readMoreButton = readMore.querySelector(".quiz-option");
+
+        resultTextElements.forEach((text, index) => {
+          const revealDelay = 300 + index * 6200;
+          const characters = text.querySelectorAll(".char");
+          const typewriterDuration = Math.max(0, characters.length - 1) * 36;
+          setTimeout(() => {
+            text.classList.add("visible");
+            characters.forEach((character, charIndex) => {
+              setTimeout(() => character.classList.add("revealed"), charIndex * 36);
+            });
+          }, revealDelay);
+
+          if (index < resultTextElements.length - 1) {
+            setTimeout(() => text.classList.add("fade-out"), revealDelay + Math.max(4700, typewriterDuration + 400));
+          }
+        });
+
+        const lastLine = resultTextElements[resultTextElements.length - 1];
+        const lastRevealDelay = 300 + (resultTextElements.length - 1) * 6200;
+        const lastTypewriterDuration = lastLine.querySelectorAll(".char").length * 36;
+        const readMoreDelay = Math.max(10000, lastRevealDelay + Math.max(3500, lastTypewriterDuration + 1200));
+        setTimeout(() => readMore.classList.add("visible"), readMoreDelay);
+
+        readMoreButton.addEventListener("click", async () => {
+          const destination = readMoreButton.dataset.next;
+          readMoreButton.disabled = true;
+
+          if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            await quiz.animate(
+              [{ opacity: 1 }, { opacity: 0 }],
+              { duration: 1000, easing: "ease-in-out", fill: "forwards" }
+            ).finished;
+          }
+
+          window.location.href = destination;
+        });
+      }
+
+      /*questions fade into the next when clicked*/
+      async function showQuestion(questionId) {
+        const currentMenu = quiz.querySelector('.quiz-menu');
+
+        if (currentMenu) {
+          await currentMenu.animate(
+            [{ opacity: 1 }, { opacity: 0 }],
+            { duration: 500, easing: 'ease-in' }
+          ).finished;
+        }
+
+        renderQuestion(questionId);
+      }
+
+      showQuestion("start");
+    </script>
+    <script src="scripts/splitting.js"></script>
+    <script src="scripts/blob-targeting.js"></script>
+    <script src="scripts/custom-cursor.js"></script>
+  </body>
+</html>

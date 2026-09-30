@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" type="image/png" href="../favicon/favicon.png">
+    <title>Algorithm Marketing</title>
+    <link rel="stylesheet" href="../styles/animation.css">
+    <link rel="stylesheet" href="../styles/general.css">
+    <link rel="stylesheet" href="../styles/background.css">
+    <link rel="stylesheet" href="../styles/splitting.css">
+
+    <style>
+      .page-entry{
+        display: none;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <div class="info-content">
+        <div class="info-title">Algorithm Marketing</div>
+        <div class="cont-box">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+          <button class="cont-why" type="button">
+            What is it?
+          </button>
+        </div>
+        <div class="cont-box harm-box" hidden>
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+          <button class="cont-why cont-harm" type="button">
+            Why is this harmful?
+          </button>
+        </div>
+        <div class="cont-box workaround-box" hidden>
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+          <button class="cont-why" type="button">
+            How can I work around this?
+          </button>
+        </div>
+        <div class="cont-box home-box" hidden>
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div>
+          <button class="cont-why" type="button">
+            I understand, take me back home.
+          </button>
+        </div>
+        <div class="info-copy" aria-live="polite" aria-atomic="true" hidden></div>
+      </div>
+    </div>
+
+  <div class="page-entry" aria-hidden="true"></div>
+  <hr class="line-top">
+   <div class="page-transition" aria-hidden="true"></div>
+  <div class="blob-scene is-opening" aria-hidden="true">
+      <div class="blob blob-one"></div>
+      <div class="blob blob-two"></div>
+      <div class="blob blob-three"></div>
+      <div class="blur-overlay"></div>
+      <div class="noise"></div>
+   </div>
+  
+    <script src="../scripts/splitting.js"></script>
+    <script src="../scripts/blob-targeting.js"></script>
+    <script src="../scripts/custom-cursor.js"></script>
+    <script>
+      const infoTitle = document.querySelector(".info-title");
+      const continueBox = document.querySelector(".cont-box");
+      const continueButton = document.querySelector(".cont-why");
+      const harmBox = document.querySelector(".harm-box");
+      const harmButton = document.querySelector(".cont-harm");
+      const workaroundBox = document.querySelector(".workaround-box");
+      const homeBox = document.querySelector(".home-box");
+      const pageTransition = document.querySelector(".page-transition");
+      const infoCopy = document.querySelector(".info-copy");
+      const titleBounds = infoTitle.getBoundingClientRect();
+      const centerOffset = window.innerHeight / 2 - 40 - (titleBounds.top + titleBounds.height / 2);
+      let infoCopySlide;
+
+      infoTitle.style.opacity = "0";
+
+      function renderInfoLines(lines, keepFinalLine, onComplete) {
+        infoCopy.innerHTML = lines.map(line => `<div class="info-line">${line}</div>`).join("");
+        infoCopy.hidden = false;
+
+        const infoLines = infoCopy.querySelectorAll(".info-line");
+        Splitting({ target: infoLines, by: "chars" });
+
+        let nextLineStart = 0;
+        infoLines.forEach((line, index) => {
+          const characters = line.querySelectorAll(".char");
+          const typewriterDuration = Math.max(0, characters.length - 1) * 36;
+          const lineStart = nextLineStart;
+          const lineFadeStart = lineStart + typewriterDuration + 3000;
+
+          window.setTimeout(() => {
+            line.classList.add("visible");
+            characters.forEach((character, charIndex) => {
+              window.setTimeout(() => character.classList.add("revealed"), charIndex * 36);
+            });
+          }, lineStart);
+
+          const isFinalLine = index === infoLines.length - 1;
+          if (!isFinalLine || !keepFinalLine) {
+            window.setTimeout(() => line.classList.add("fade-out"), lineFadeStart);
+            nextLineStart = lineFadeStart + 800;
+          } else {
+            nextLineStart = lineFadeStart;
+            if (onComplete) window.setTimeout(onComplete, lineFadeStart);
+          }
+        });
+      }
+
+      function renderIntroScene() {
+        renderInfoLines([
+          "Algorithms are used by many companies to determine what you show interest in.",
+          "This allows platforms to tailor their recommended feed to your liking, in order to keep you interacting with their services."
+        ], true, async () => {
+          await slideCopyAndReveal(harmBox);
+        });
+      }
+
+      async function slideCopyAndReveal(promptBox) {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          infoCopy.style.translate = "0 -125px";
+          promptBox.hidden = false;
+          promptBox.style.opacity = "1";
+          return;
+        }
+
+        infoCopySlide = infoCopy.animate(
+          [{ translate: "0 0" }, { translate: "0 -125px" }],
+          { duration: 750, easing: "ease-in-out", fill: "forwards" }
+        );
+        await infoCopySlide.finished;
+        promptBox.hidden = false;
+        promptBox.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 800, easing: "ease-out", fill: "forwards" }
+        );
+      }
+
+      function renderHarmScene() {
+        renderInfoLines([
+          "Because algorithms determine people's specific interests, advertisers can aim at their target audience with high accuracy.",
+          "Advertising is also constantly shown to us in most online environments.",
+          "In combination, these two factors may gradually tempt us to spend more on things we want but don't need."
+        ], true, async () => {
+          await slideCopyAndReveal(workaroundBox);
+        });
+      }
+
+      function renderWorkaroundScene() {
+        renderInfoLines([
+          "If you easily give in to your spending urges, you can try to limit your exposure to certain cues which may trigger temptation.",
+          "This can be done by limiting the ways third parties can access your data through email account settings.",
+          "Additionally, you should take time to properly evaluate if your purchases are worth money that could be saved for something else."
+        ], true, async () => {
+          await slideCopyAndReveal(homeBox);
+        });
+      }
+
+      continueButton.addEventListener("click", () => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          continueBox.hidden = true;
+          renderIntroScene();
+          return;
+        }
+
+        const exitAnimation = continueBox.animate(
+          [{ opacity: getComputedStyle(continueBox).opacity }, { opacity: 0 }],
+          { duration: 800, easing: "ease-out", fill: "forwards" }
+        );
+        exitAnimation.finished.then(() => {
+          continueBox.hidden = true;
+          renderIntroScene();
+        });
+      });
+
+      harmButton.addEventListener("click", async () => {
+        const fadeOptions = { duration: 800, easing: "ease-out", fill: "forwards" };
+        const fades = [
+          infoCopy.animate([{ opacity: 1 }, { opacity: 0 }], fadeOptions),
+          harmBox.animate([{ opacity: getComputedStyle(harmBox).opacity }, { opacity: 0 }], fadeOptions)
+        ];
+        await Promise.all(fades.map(animation => animation.finished));
+        fades.forEach(animation => animation.cancel());
+        infoCopySlide?.cancel();
+        infoCopy.style.translate = "0 0";
+        infoCopy.hidden = true;
+        harmBox.hidden = true;
+        renderHarmScene();
+      });
+
+      workaroundBox.querySelector("button").addEventListener("click", async () => {
+        const fadeOptions = { duration: 800, easing: "ease-out", fill: "forwards" };
+        const fades = [
+          infoCopy.animate([{ opacity: 1 }, { opacity: 0 }], fadeOptions),
+          workaroundBox.animate(
+            [{ opacity: getComputedStyle(workaroundBox).opacity }, { opacity: 0 }],
+            fadeOptions
+          )
+        ];
+        await Promise.all(fades.map(animation => animation.finished));
+        fades.forEach(animation => animation.cancel());
+        infoCopySlide?.cancel();
+        infoCopy.style.translate = "0 0";
+        infoCopy.hidden = true;
+        workaroundBox.hidden = true;
+        renderWorkaroundScene();
+      });
+
+      homeBox.querySelector("button").addEventListener("click", async () => {
+        const fadeOut = homeBox.animate(
+          [{ opacity: getComputedStyle(homeBox).opacity }, { opacity: 0 }],
+          { duration: 600, easing: "ease-out", fill: "forwards" }
+        );
+        const fadeToBlack = pageTransition.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 1000, easing: "ease-in", fill: "forwards" }
+        );
+        await Promise.all([fadeOut.finished, fadeToBlack.finished]);
+        window.location.href = "../home.html";
+      });
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        infoTitle.style.opacity = "1";
+        continueBox.style.opacity = "1";
+        continueBox.style.transition = "none";
+      } else {
+        infoTitle.style.transform = `translateY(${centerOffset}px)`;
+        const titleFade = infoTitle.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 1000, easing: "ease-out", fill: "forwards" }
+        );
+
+        titleFade.finished.then(() => {
+          window.setTimeout(() => {
+            const titleSlide = infoTitle.animate(
+              [
+                { transform: `translateY(${centerOffset}px)` },
+                { transform: "translateY(0)" },
+              ],
+              { duration: 900, easing: "ease-out", fill: "forwards" }
+            );
+
+            titleSlide.finished.then(() => {
+              window.setTimeout(() => {
+                continueBox.animate(
+                  [{ opacity: 0 }, { opacity: 1 }],
+                  { duration: 800, easing: "ease-out", fill: "forwards" }
+                );
+              }, 500);
+            });
+          }, 1750);
+        });
+      }
+    </script>
+    <hr class="line-bottom">
+  </body>
+</html>
