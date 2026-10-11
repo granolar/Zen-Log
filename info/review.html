@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" type="image/png" href="../favicon/favicon.png">
+    <title>Review</title>
+    <link rel="stylesheet" href="../styles/animation.css">
+    <link rel="stylesheet" href="../styles/general.css">
+    <link rel="stylesheet" href="../styles/background.css">
+    <link rel="stylesheet" href="../styles/splitting.css">
+
+    <style>
+      .page-entry{
+        display: none;
+      }
+
+      .main,
+      .line-top,
+      .line-bottom{
+        animation: fade-in 1200ms ease-out both;
+      }
+
+      .main{
+        z-index: 10;
+      }
+
+      .menu-option{
+        font-size: 30px;
+        line-height: 1.2;
+        margin: 7px 0;
+      }
+
+      .menu-option .arrow-bullet{
+        font-size: 30px;
+        line-height: 1.2;
+      }
+
+      @media (prefers-reduced-motion: reduce){
+        .main,
+        .line-top,
+        .line-bottom{
+          animation: none;
+        }
+      }
+
+    </style>
+      <script src="../scripts/theme.js"></script>
+  </head>
+  <body>
+    <div class="page-entry" aria-hidden="true"></div>
+    </div>
+    <hr class="line-top">
+    <div class="main">
+      <div class="menu">
+        <p class="menu-question">What do you want to read on?</p>
+        <button class="menu-option" data-destination="algo-marketing.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>Algorithm marketing.</button>
+        <button class="menu-option" data-destination="bnpl.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>'Buy Now, Pay Later' services.</button>
+        <button class="menu-option" data-destination="emo-spending.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>Emotional spending.</button>
+        <button class="menu-option" data-destination="gratification.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>Instant gratification.</button>
+        <button class="menu-option" data-destination="overspending.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>Overspending.</button>
+        <button class="menu-option" data-destination="sales-tactics.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>Online sales tactics.</button>
+        <button class="menu-option" data-destination="saving-habit.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>The importance of saving habits.</button>
+        <button class="menu-option" data-destination="social-influence.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>Social influence.</button>
+        <button class="menu-option" data-destination="../home.html"><div class="arrow-bullet" aria-hidden="true">&gt;</div>Back to the homepage.</button>
+      </div>
+    </div>
+    <hr class="line-bottom">
+
+    <div class="page-transition" aria-hidden="true"></div>
+    <div class="goal-met-overlay" aria-live="polite" hidden>
+      <div class="goal-met-content">
+        <p class="goal-met-message"></p>
+        <a class="new-goal-link" href="goal-manager.html">
+          <span class="arrow-bullet" aria-hidden="true">&gt;</span>I want to set a new goal.
+        </a>
+      </div>
+    </div>
+   <div class="blob-scene" aria-hidden="true">
+      <div class="blob blob-one"></div>
+      <div class="blob blob-two"></div>
+      <div class="blob blob-three"></div>
+      <div class="blur-overlay"></div>
+      <div class="noise"></div>
+    </div>
+
+    <script>
+      const pageTransition = document.querySelector('.page-transition');
+
+      function navigateWithTransition(destination){
+        pageTransition.classList.add('is-active');
+        window.setTimeout(() => {
+          window.location.href = destination;
+        }, 1200);
+      }
+
+      document.querySelectorAll('.menu-option').forEach(option => {
+        option.addEventListener('click', () => {
+          navigateWithTransition(option.dataset.destination);
+        });
+      });
+    </script>
+    <script src="../scripts/custom-cursor.js"></script>
+  </body>
