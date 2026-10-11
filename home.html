@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" type="image/png" href="favicon/favicon.png">
+    <title>Home</title>
+    <link rel="stylesheet" href="styles/animation.css">
+    <link rel="stylesheet" href="styles/general.css">
+    <link rel="stylesheet" href="styles/background.css">
+    <link rel="stylesheet" href="styles/splitting.css">
+    <style>
+      .savings-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: absolute;
+        top: 42%;
+        left: 50%;
+        width: 100%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+      }
+
+      .savings-tally-sub{
+        font-size: 30px;
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: -20px;
+        animation: zoom-in 1800ms ease-out both, fade-out 1200ms ease-in 6000ms both;
+      }
+
+      .savings-tally-sum{
+        font-size: 120px;
+        text-align: center;
+        font-weight: 1000;
+        margin-left: -20px;
+        animation: zoom-in 1800ms ease-out both, thicken 1800ms ease-out both, fade-out 1200ms ease-in 6000ms both;
+      }
+
+     .savings-progress-bar{
+        width: min(70%, 720px); /* size readjusts to screen size */
+        height: 18px;
+        margin-top: 0px;
+        margin-bottom: 10px;
+        border-radius: 9px;
+        padding: 2px;
+        overflow: hidden;
+        background-color: var(--text);
+        display: flex;
+        justify-content: center;
+        animation: zoom-in 1800ms ease-out both, fade-out 1200ms ease-in 6000ms both;
+      }
+
+      .savings-progress-fill{
+        width: 0;
+        height: 100%;
+        border-radius: 999px;
+        background-color: var(--fill);
+      }
+
+      .savings-tally-statement{
+        font-size: 30px;
+        text-align: center;
+        margin-top: 10px;
+        animation: zoom-in 1800ms ease-out 2500ms both, fade-out 1200ms ease-in 6000ms both;
+      }
+
+  
+
+      .fixed-dollar,  /* makes dollar sign and full stop stay the same boldness / glyph */
+      .fixed-fullstop{
+        font-weight: 700;
+        animation: zoom-in 1800ms ease-out both, thicken-punct 1800ms ease-out both;
+      }
+
+      .menu{
+        opacity: 0;
+        animation: fade-in 1200ms ease-in 8200ms both;
+      }
+
+      .colour-menu{
+        animation: none;
+        opacity: 0;
+      }
+
+      .colour-menu[hidden]{
+        display: none;
+      }
+
+      .page-transition{
+        position: fixed;
+        inset: 0;
+        background-color: var(--overlay);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 1200ms ease-in;
+        z-index: 101;
+      }
+
+    </style>
+      <script src="scripts/theme.js"></script>
+  </head>
+
+
+
+  <body>
+    <div class="page-entry" aria-hidden="true"></div>
+    <div class="savings-content">
+        <p class="savings-tally-sub">This week you've saved...</p>
+        <p class="savings-tally-sum"><span class="fixed-dollar">$</span><span class="saved-dollars">0</span><span class="fixed-fullstop">.</span><span class="saved-cents">00</span></p>
+        <div class="savings-progress-bar" aria-hidden="true">
+          <div class="savings-progress-fill"></div>
+        </div>
+        <p class="savings-tally-statement">You've saved 0% of your goal!</p>
+    </div>
+    <hr class="line-top">
+    <div class="main">
+      <div class="menu">
+        <p class="menu-question">What's on the agenda today?</p>
+        <button class="menu-option menu-log">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> I'm logging today's savings.
+        </button>
+        <button class="menu-option menu-adjust">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> I'm adjusting my goals.
+        </button>
+        <button class="menu-option menu-reflect">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> I need to reflect.
+        </button>
+        <button class="menu-option menu-colours">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> I want to switch colours.
+        </button>
+      </div>
+      <div class="menu colour-menu" hidden>
+        <p class="menu-question">Which colour are you changing to?</p>
+        <button class="menu-option colour-option" data-colour="pink">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> Pink.
+        </button>
+        <button class="menu-option colour-option" data-colour="blue">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> Blue.
+        </button>
+        <button class="menu-option colour-option" data-colour="green">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> Green.
+        </button>
+        <button class="menu-option colour-option" data-colour="purple">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> Purple.
+        </button>
+        <button class="menu-option colour-option" data-colour="white">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> White.
+        </button>
+        <button class="menu-option colour-option" data-colour="black">
+          <div class="arrow-bullet" aria-hidden="true">&gt;</div> Black.
+        </button>
+      </div>
+    </div>
+    <hr class="line-bottom">
+
+    <div class="page-transition" aria-hidden="true"></div>
+    <div class="goal-met-overlay" aria-live="polite" hidden>
+      <div class="goal-met-content">
+        <p class="goal-met-message"></p>
+        <a class="new-goal-link" href="goal-manager.html">
+          <span class="arrow-bullet" aria-hidden="true">&gt;</span>I want to set a new goal.
+        </a>
+      </div>
+    </div>
+   <div class="blob-scene" aria-hidden="true">
+      <div class="blob blob-one"></div>
+      <div class="blob blob-two"></div>
+      <div class="blob blob-three"></div>
+      <div class="blur-overlay"></div>
+      <div class="noise"></div>
+    </div>
+
+
+
+    <script src="scripts/splitting.js"></script>
+    <script>
+      const logButton = document.querySelector('.menu-log');
+      const adjustButton = document.querySelector('.menu-adjust');
+      const coloursButton = document.querySelector('.menu-colours');
+      const mainMenu = document.querySelector('.main > .menu');
+      const colourMenu = document.querySelector('.colour-menu');
+      const reflectButton = document.querySelector('.menu-reflect');
+      const pageTransition = document.querySelector('.page-transition');
+      const savingsTallyStatement = document.querySelector('.savings-tally-statement');
+      const savedDollars = document.querySelector('.saved-dollars');
+      const savedCents = document.querySelector('.saved-cents');
+      const savingsProgressFill = document.querySelector('.savings-progress-fill');
+      const goalMetOverlay = document.querySelector('.goal-met-overlay');
+      const goalMetContent = document.querySelector('.goal-met-content');
+      const goalMetMessage = document.querySelector('.goal-met-message');
+      const newGoalLink = document.querySelector('.new-goal-link');
+      const blobScene = document.querySelector('.blob-scene');
+
+      function setSavingsTally(amount){
+        const [dollars, cents] = amount.toFixed(2).split('.');
+        savedDollars.textContent = dollars;
+        savedCents.textContent = cents;
+      }
+
+      function animateSavingsTally(total){
+        setSavingsTally(0);
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          setSavingsTally(total);
+          return;
+        }
+
+        const duration = 1800;
+        const portions = 100;
+        const startTime = performance.now();
+
+        function updateSavingsTally(timestamp){
+          const progress = Math.min(Math.max((timestamp - startTime) / duration, 0), 1);
+          const easedProgress = 1 - Math.pow(1 - progress, 3);
+          const completedPortions = progress === 1
+            ? portions
+            : Math.floor(easedProgress * portions);
+          setSavingsTally(total * completedPortions / portions);
+
+          if (progress < 1) window.requestAnimationFrame(updateSavingsTally);
+        }
+
+        window.requestAnimationFrame(updateSavingsTally);
+      }
+
+      function animateSavingsProgress(percentage){
+        const boundedProgress = Math.min(Math.max(percentage, 0), 100);
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          savingsProgressFill.style.width = `${boundedProgress}%`;
+          return;
+        }
+
+        savingsProgressFill.animate(
+          [{ width: '0%' }, { width: `${boundedProgress}%` }],
+          { duration: 1800, easing: 'ease-out', fill: 'forwards' }
+        );
+      }
+
+      try {
+        const goal = JSON.parse(localStorage.getItem('goal-manager.goal'));
+        const entries = JSON.parse(localStorage.getItem('savings-log.entries'));
+        const goalAmount = Number(goal?.amount);
+        const totalSaved = Array.isArray(entries)
+          ? entries.reduce((total, entry) => total + (Number.isFinite(Number(entry.amount)) ? Number(entry.amount) : 0), 0)
+          : 0;
+        animateSavingsTally(totalSaved);
+        const goalProgress = Number.isFinite(goalAmount) && goalAmount > 0
+          ? totalSaved / goalAmount * 100
+          : 0;
+        const percentage = Math.round(goalProgress);
+        animateSavingsProgress(goalProgress);
+
+        savingsTallyStatement.textContent = `You've saved ${percentage}% of your goal.`;
+
+        if (Number.isFinite(goalAmount) && goalAmount > 0 && totalSaved >= goalAmount) {
+          goalMetMessage.textContent = "Congratulations! You've met your savings goal!";
+          Splitting({ target: [goalMetMessage], by: 'chars', force: true });
+          goalMetOverlay.hidden = false;
+
+          window.setTimeout(() => {
+            blobScene.classList.add('is-opening');
+            goalMetOverlay.animate(
+              [{ opacity: 0 }, { opacity: 1 }],
+              { duration: 500, easing: 'ease-out', fill: 'forwards' }
+            );
+            goalMetMessage.querySelectorAll('.char').forEach((character, index) => {
+              window.setTimeout(() => character.classList.add('revealed'), index * 32);
+            });
+
+            const typewriterDuration = Math.max(0, goalMetMessage.querySelectorAll('.char').length - 1) * 32;
+            window.setTimeout(async () => {
+              await goalMetContent.animate(
+                [
+                  { transform: 'translateY(-20px)' },
+                  { transform: 'translateY(-80px)' },
+                ],
+                { duration: 750, easing: 'ease-in-out', fill: 'forwards' }
+              ).finished;
+              newGoalLink.classList.add('is-visible');
+            }, typewriterDuration);
+          }, 9200);
+        }
+      } catch {
+        setSavingsTally(0);
+        savingsTallyStatement.textContent = "You've saved 0% of your goal!";
+      }
+
+      reflectButton.addEventListener('click', () => {
+        pageTransition.classList.add('is-active');
+        window.setTimeout(() => {
+          window.location.href = 'quiz.html';
+        }, 1200);
+      });
+
+      logButton.addEventListener('click', () => {
+        pageTransition.classList.add('is-active');
+        window.setTimeout(() => {
+          window.location.href = 'savings-log.html';
+        }, 1200);
+      });
+
+      coloursButton.addEventListener('click', async () => {
+        const fadeOptions = { duration: 600, easing: 'ease-in-out', fill: 'forwards' };
+        await mainMenu.animate([{ opacity: 1 }, { opacity: 0 }], fadeOptions).finished;
+        mainMenu.hidden = true;
+        mainMenu.style.display = 'none';
+        colourMenu.hidden = false;
+        colourMenu.animate([{ opacity: 0 }, { opacity: 1 }], fadeOptions);
+      });
+
+      colourMenu.querySelectorAll('.colour-option').forEach(option => {
+        option.addEventListener('click', () => {
+          window.setZenTheme(option.dataset.colour);
+          window.location.reload();
+        });
+      });
+
+      adjustButton.addEventListener('click', () => {
+        pageTransition.classList.add('is-active');
+        window.setTimeout(() => {
+          window.location.href = 'goal-manager.html';
+        }, 1200);
+      });
+    </script>
+    <script src="scripts/blob-targeting.js"></script>
+    <script src="scripts/custom-cursor.js"></script>
+  </body>
+
+
+
+
+</html>
